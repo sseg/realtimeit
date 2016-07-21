@@ -1,7 +1,20 @@
 {
   "name": "realtimeit",
   "version": "0.0.0",
+  "scripts": {
+    "cleanDb": "rm -rf /tmp/realtimeit_data/ & rm /tmp/realtimeit_db_log",
+    "makeDb": "rethinkdb create --config-file ./etc/rethinkdb.conf",
+    "serveDb": "rethinkdb serve --config-file ./etc/rethinkdb.conf & RETHINKDB_PID=$!",
+    "serveApp": "node ./app.js && kill $RETHINKDB_PID",
+
+    "clean": "npm run cleanDb",
+    "make": "npm run makeDb",
+
+    "make:clean": "npm run clean && npm run make",
+    "start": "npm run serveDb & npm run serveApp"
+  },
   "dependencies": {
-    "koa": "^1.2.0"
+    "koa": "^1.2.0",
+    "rethinkdb": "^2.3.2"
   }
 }
