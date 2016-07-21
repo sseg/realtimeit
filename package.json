@@ -1,0 +1,7 @@
+{
+  "name": "realtimeit",
+  "version": "0.0.0",
+  "dependencies": {
+    "koa": "^1.2.0"
+  }
+}
