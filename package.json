@@ -6,15 +6,16 @@
     "makeDb": "rethinkdb create --config-file ./etc/rethinkdb.conf",
     "serveDb": "rethinkdb serve --config-file ./etc/rethinkdb.conf & RETHINKDB_PID=$!",
     "serveApp": "node ./app.js && kill $RETHINKDB_PID",
-
     "clean": "npm run cleanDb",
     "make": "npm run makeDb",
-
     "make:clean": "npm run clean && npm run make",
-    "start": "npm run serveDb & npm run serveApp"
+    "start": "npm run serveDb & npm run serveApp",
+    "start:app": "node ./app.js"
   },
   "dependencies": {
     "koa": "^1.2.0",
-    "rethinkdb": "^2.3.2"
+    "koa-router": "^5.4.0",
+    "rethinkdb": "^2.3.2",
+    "ws": "^1.1.1"
   }
 }
