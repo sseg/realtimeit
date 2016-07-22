@@ -1,24 +1,33 @@
-var ws = module.exports = {};
-var SocketServer = require('ws').Server;
+const WSServer = require('ws').Server;
 
 
-ws.listen = (server) => {
-    var wss = new SocketServer({server: server});
+module.exports = class SocketServer {
+    constructor (app) {
+        this.app = app;
+    }
 
-    wss.on('connection', (sock) => {
-        console.log('opened!');
+    listen (server) {
+        this.server = new WSServer({server: server});
+        this.server.on('connection', this.onConnection.bind(this));
+    }
 
-        sock.on('close', () => {
-            console.log('closed');
-        });
-        sock.on('error', err => {
-            console.log('error');
-            console.log(err);
-        });
-        sock.on('message', data => {
-            console.log('message');
-            console.log(data);
-        });
-    });
+    onConnection (socket) {
+        console.log('Websocket connection opened');
 
+        socket.on('close', this.onClose.bind(this));
+        socket.on('error', this.onError.bind(this));
+        socket.on('message', this.onMessage.bind(this));
+    }
+
+    onClose () {
+        console.log('Client disconnected');
+    }
+
+    onError (error) {
+        console.log(error);
+    }
+
+    onMessage (message, flags) {
+        console.log('Received message: %s', message);
+    }
 };
