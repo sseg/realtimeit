@@ -1,6 +1,11 @@
 {
   "name": "realtimeit",
   "version": "0.0.0",
+  "license": "MPL-2.0",
+  "author": {
+    "name": "Steven Seguin"
+  },
+  "private": true,
   "scripts": {
     "cleanDb": "rm -rf /tmp/realtimeit_data/ & rm /tmp/realtimeit_db_log",
     "makeDb": "rethinkdb create --config-file ./etc/rethinkdb.conf",
