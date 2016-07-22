@@ -20,7 +20,8 @@ Install JS dependencies:
 
 Prepare the local database:
 
-    npm run make
+    npm run makeDb
+    npm run serveDb &
 
 And serve the app:
 

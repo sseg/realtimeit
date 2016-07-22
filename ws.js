@@ -1,5 +1,5 @@
 const WSServer = require('ws').Server;
-const Rethink = require('./repos/rethinkdb');
+const Rethink = require('./repos/rethink');
 
 
 module.exports = class SocketServer {
@@ -19,6 +19,20 @@ module.exports = class SocketServer {
         console.log('Websocket connection opened with new client ID: ' + socket.id);
 
         socket.discussionSubscription = null;
+        socket.dbConn = null;
+
+        socket.onDataUpdate = (row) => {
+            let doc = row.new_val;
+            let update = {
+                id: doc.id,
+                topic: doc.topic,
+                comments: doc.rollUp,
+                dateCreated: doc.dateCreated,
+                dateModified: doc.dateModified
+            };
+            socket.send(JSON.stringify(update, null, 2));
+        };
+
         socket.on('close', this.onClose.bind(this, socket.id));
         socket.on('error', this.onError.bind(this, socket.id));
         socket.on('message', this.onMessage.bind(this, socket.id));
@@ -27,6 +41,8 @@ module.exports = class SocketServer {
 
     onClose (clientId) {
         console.log('Client <%s> disconnected', clientId);
+        let socket = this.clientSessions[clientId];
+        socket.dbConn.close();
         delete this.clientSessions[clientId];
     }
 
@@ -37,7 +53,6 @@ module.exports = class SocketServer {
 
     onMessage (clientId, message, flags) {
         console.log('Received from client: %s', clientId);
-
         let socket = this.clientSessions[clientId];
         socket.discussionSubscription = getSubscriptionId(message);
         updateSubscription(socket);
@@ -57,5 +72,29 @@ function getSubscriptionId(message) {
 
 
 function updateSubscription(socket) {
+    if (socket.dbConn !== null) {
+        socket.dbConn.close();
+        socket.dbConn = null;
+    }
 
+    if (socket.discussionSubscription === null) {
+        return;
+    }
+
+    Rethink.openConnection().then(
+        (conn) => {
+            socket.dbConn = conn;
+            Rethink.subscribeToDiscussion(
+                socket.discussionSubscription
+            ).run(
+                conn, (err, cursor) => {
+                    if (err) throw err;
+                    cursor.each((err, row) => {
+                        if (err) throw err;
+                        socket.onDataUpdate(row);
+                    });
+                }
+            );
+        }
+    );
 }
