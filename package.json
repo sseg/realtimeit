@@ -8,8 +8,8 @@
   "private": true,
   "scripts": {
     "cleanDb": "rm -rf /tmp/realtimeit_data/ & rm /tmp/realtimeit_db_log",
-    "makeDb": "rethinkdb create --config-file ./etc/rethinkdb.conf",
-    "serveDb": "rethinkdb serve --config-file ./etc/rethinkdb.conf & RETHINKDB_PID=$!",
+    "makeDb": "rethinkdb create -d /tmp/realtimeit_data/ --log-file /tmp/realtimeit_db_log",
+    "serveDb": "rethinkdb serve -d /tmp/realtimeit_data/ --log-file /tmp/realtimeit_db_log & RETHINKDB_PID=$!",
     "serveApp": "node ./app.js && kill $RETHINKDB_PID",
     "clean": "npm run cleanDb",
     "make": "npm run makeDb",
