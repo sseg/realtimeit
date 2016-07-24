@@ -63,8 +63,8 @@ const Comment = {
             this.throw(404);
         }
 
-        let node = doc.rollUp;
-        let commentPath = this.params.commentId.split('.');
+        let node = doc.rollUp,
+            commentPath = this.params.commentId.split('.');
 
         try {
             for (let index of commentPath) {
@@ -86,12 +86,47 @@ const Comment = {
         * @param {optional dispatch} - the ID of the comment being updated. Defaults
         *     to new comment creation.
         * @param {body string} text - the text content of the comment.
-        * @param {optional body string} parentId - the ID of the parent comment
+        * @param {optional body string} parent - the ID of the parent comment
         *     being replied to. Defaults to top-level reply.
         * @throws {404} discussion or comment not found.
         * @return {body json} object with new or amended comment ID.
         */
-        this.body = `You have posted/edited a comment!`;
+
+        let discussionId = this.params.discussionId,
+            commentId = this.params.commentId,
+            text = this.request.body.text,
+            parent = this.request.body.parent,
+            parentPath,
+            discussionChanges;
+
+        if (parent) {
+            parentPath = parent.split('.').map(Number);
+        } else {
+            parentPath = [];
+        }
+
+        if (parentPath.length >= 20) {
+            // will overflow rethink callstack
+            this.throw(402);
+        }
+
+        let conn = yield Rethink.openConnection();
+        if (commentId) {
+            discussionChanges = yield Rethink.Comment.update(
+                discussionId, commentId, text
+            ).run(conn);
+        } else {
+            discussionChanges = yield Rethink.Comment.insert(
+                discussionId, parentPath, text
+            ).run(conn);
+        }
+        yield conn.close();
+
+        this.body = discussionChanges;
+    },
+
+    delete: function* deleteComment() {
+        yield;
     },
 
     getHistory: function* getCommentHistory() {
@@ -103,6 +138,7 @@ const Comment = {
         * @throws {404} discussion or comment not found.
         * @return {body json} an array of versions of the comment.
         */
+        yield;
         this.body = `You have retrieved a comment history!`;
     },
 
@@ -114,5 +150,7 @@ router.get('getDiscussion', '/discussion/:id', Discussion.get);
 router.post('postDiscussion', '/discussion', Discussion.post);
 
 router.get('getComment', '/discussion/:discussionId/comment/:commentId', Comment.get);
-router.put('putComment', '/discussion/:discussionId/comment/:commentId', Comment.put);
+router.put('updateComment', '/discussion/:discussionId/comment/:commentId', Comment.put);
+router.put('createComment', '/discussion/:discussionId/comment', Comment.put);
+router.delete('deleteComment', '/discussion/:discussionId/comment/:commentId', Comment.delete);
 router.get('getCommentHistory', '/discussion/:discussionId/comment/:commentId/history', Comment.getHistory);
